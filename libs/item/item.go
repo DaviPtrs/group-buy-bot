@@ -12,6 +12,7 @@ import (
 
 type Item struct {
 	CustomID      string
+	UserID        string
 	URL           string
 	Price         float32
 	Weight        float32
@@ -57,7 +58,9 @@ func ParseFromModal(data *discordgo.ModalSubmitInteractionData) (*Item, error) {
 
 	location := data.Components[4].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 
-	return &Item{data.CustomID, url.String(), float32(price), float32(weight), int(tax), location}, nil
+	userID := UserIDfromItemCustomID(data.CustomID)
+
+	return &Item{data.CustomID, userID, url.String(), float32(price), float32(weight), int(tax), location}, nil
 }
 
 func (item *Item) ParseToEmbedFields() *[]*discordgo.MessageEmbedField {
@@ -83,4 +86,16 @@ func (item *Item) ParseToEmbedFields() *[]*discordgo.MessageEmbedField {
 	}
 
 	return &fields
+}
+
+func UserIDfromItemCustomID(customID string) string {
+
+	re := regexp.MustCompile(`group_buy_item_([0-9]+)_`)
+
+	matches := re.FindStringSubmatch(customID)
+
+	if len(matches) == 2 {
+		return matches[1]
+	}
+	return ""
 }
