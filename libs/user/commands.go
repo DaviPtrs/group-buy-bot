@@ -5,10 +5,10 @@ import "github.com/bwmarrin/discordgo"
 var (
 	Commands = []*discordgo.ApplicationCommand{
 		{
-			Name:        "new",
-			Description: "Register new product",
+			Name:        "add",
+			Description: "Register/Add new product",
 			DescriptionLocalizations: &map[discordgo.Locale]string{
-				discordgo.PortugueseBR: "Registrar novo produto",
+				discordgo.PortugueseBR: "Registrar/Adicionar novo produto",
 			},
 		},
 	}

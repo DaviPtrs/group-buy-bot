@@ -37,6 +37,12 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to create session: %v", err)
 	}
+
+	discord.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if h, ok := user.CommandHandlers()[i.ApplicationCommandData().Name]; ok {
+			h(s, i)
+		}
+	})
 }
 
 func main() {
