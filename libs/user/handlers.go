@@ -3,26 +3,13 @@ package user
 import (
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
+	"github.com/DaviPtrs/group-buy-bot/libs/approval"
 	"github.com/DaviPtrs/group-buy-bot/libs/item"
 	"github.com/bwmarrin/discordgo"
-	"github.com/joho/godotenv"
 	uuid "github.com/satori/go.uuid"
 )
-
-var ApprovalChannelID string
-
-func init() {
-	godotenv.Load()
-
-	var ok bool
-	ApprovalChannelID, ok = os.LookupEnv("DISCORD_BOT_APPROVAL_CHANNEL_ID")
-	if !ok {
-		log.Fatal("Approval Channel ID not found")
-	}
-}
 
 func CommandHandlers() map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	return map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
@@ -132,7 +119,7 @@ func addModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	log.Printf("Item received from user id: %v", i.Member.User.ID)
-	err := receivedItemToApproval(s, i.Member.User.ID, &data)
+	err := approval.SendItemToApproval(s, i.Member.User.ID, &data)
 	var submit_message string
 	if err != nil {
 		valErr, ok := err.(*item.InvalidItem)
@@ -156,27 +143,4 @@ func addModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Panicf("Unable to respond to modal %v: %v", data.CustomID, err)
 	}
 
-}
-
-func receivedItemToApproval(s *discordgo.Session, userID string, data *discordgo.ModalSubmitInteractionData) error {
-	item, err := item.ParseFromModal(data)
-	if err != nil {
-		return err
-	}
-
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Item received from <@%s>\n\n", userID))
-	sb.WriteString(fmt.Sprintf("**Link:** %s\n\n", item.URL))
-	sb.WriteString(fmt.Sprintf("**Price:** $ %.2f\n\n", item.Price))
-	sb.WriteString(fmt.Sprintf("**Weight:** %.2f lbs\n\n", item.Weight))
-	sb.WriteString(fmt.Sprintf("**Estimated Tax:** %v %%\n\n", item.TaxRate))
-	sb.WriteString(fmt.Sprintf("**Buyer's location:** %v\n\n", item.BuyerLocation))
-
-	_, err = s.ChannelMessageSend(ApprovalChannelID, sb.String())
-
-	if err != nil {
-		log.Panicf("Error on sending item to approval: %v", err)
-	}
-
-	return nil
 }

@@ -54,6 +54,8 @@ func main() {
 			for _, h := range user.ModalHandlers() {
 				h(s, i)
 			}
+		case discordgo.InteractionMessageComponent:
+			log.Print(i.MessageComponentData().CustomID)
 		}
 	})
 
