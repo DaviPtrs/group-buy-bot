@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/DaviPtrs/group-buy-bot/libs/item"
 	"github.com/bwmarrin/discordgo"
@@ -29,16 +28,13 @@ func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.Mod
 		return err
 	}
 
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Item received from <@%s>\n\n", userID))
-	sb.WriteString(fmt.Sprintf("**Link:** %s\n\n", item.URL))
-	sb.WriteString(fmt.Sprintf("**Price:** $ %.2f\n\n", item.Price))
-	sb.WriteString(fmt.Sprintf("**Weight:** %.2f lbs\n\n", item.Weight))
-	sb.WriteString(fmt.Sprintf("**Estimated Tax:** %v %%\n\n", item.TaxRate))
-	sb.WriteString(fmt.Sprintf("**Buyer's location:** %v\n\n", item.BuyerLocation))
+	embed := discordgo.MessageEmbed{
+		Fields: *item.ParseToEmbedFields(),
+	}
 
 	message := discordgo.MessageSend{
-		Content: sb.String(),
+		Content: fmt.Sprintf("Item received from <@%s>\n\n", userID),
+		Embeds:  []*discordgo.MessageEmbed{&embed},
 		Components: []discordgo.MessageComponent{
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{

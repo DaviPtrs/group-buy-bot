@@ -1,6 +1,7 @@
 package item
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -57,4 +58,29 @@ func ParseFromModal(data *discordgo.ModalSubmitInteractionData) (*Item, error) {
 	location := data.Components[4].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 
 	return &Item{data.CustomID, url.String(), float32(price), float32(weight), int(tax), location}, nil
+}
+
+func (item *Item) ParseToEmbedFields() *[]*discordgo.MessageEmbedField {
+	fields := []*discordgo.MessageEmbedField{
+		{
+			Name: "ID", Value: item.CustomID,
+		},
+		{
+			Name: "URL", Value: item.URL,
+		},
+		{
+			Name: "Price", Value: fmt.Sprintf("$%.2f", item.Price),
+		},
+		{
+			Name: "Weight", Value: fmt.Sprintf("%.2flbs", item.Weight),
+		},
+		{
+			Name: "Estimated Tax", Value: fmt.Sprintf("%d%%", item.TaxRate),
+		},
+		{
+			Name: "Buyer's location", Value: item.BuyerLocation,
+		},
+	}
+
+	return &fields
 }

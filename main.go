@@ -55,7 +55,12 @@ func main() {
 				h(s, i)
 			}
 		case discordgo.InteractionMessageComponent:
-			log.Print(i.MessageComponentData().CustomID)
+			for _, e := range i.Message.Embeds {
+				for _, field := range e.Fields {
+					log.Print(field.Name)
+					log.Print(field.Value)
+				}
+			}
 		}
 	})
 
