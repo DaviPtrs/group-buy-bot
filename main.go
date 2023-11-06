@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -40,14 +39,7 @@ func init() {
 	}
 }
 
-func test(s *discordgo.Session, c *discordgo.Connect) {
-	for _, guild := range s.State.Guilds {
-		fmt.Println(guild.ID)
-	}
-}
-
 func main() {
-	discord.AddHandler(test)
 	discord.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
