@@ -4,23 +4,36 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 
+	"github.com/DaviPtrs/group-buy-bot/libs/user"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 )
 
 var discord *discordgo.Session
+var guildID string
+var removeCommands bool
 
 func init() {
 	godotenv.Load()
 }
 
 func init() {
-	var err error
 	token, ok := os.LookupEnv("DISCORD_BOT_TOKEN")
 	if !ok {
 		log.Fatal("Bot Token not found")
 	}
+	guildID, ok = os.LookupEnv("DISCORD_BOT_GUILD_ID")
+	if !ok {
+		log.Fatal("Guild ID not found")
+	}
+	env, ok := os.LookupEnv("DISCORD_BOT_ENVIRONMENT")
+	if ok && env == "development" {
+		removeCommands = true
+	}
+
+	var err error
 	discord, err = discordgo.New("Bot " + token)
 	if err != nil {
 		log.Fatalf("Failed to create session: %v", err)
@@ -35,10 +48,44 @@ func test(s *discordgo.Session, c *discordgo.Connect) {
 
 func main() {
 	discord.AddHandler(test)
+	discord.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
+	})
 
 	err := discord.Open()
 	if err != nil {
 		log.Fatalf("Cannot open the session: %v", err)
 	}
+
+	for _, v := range user.Commands {
+		_, err := discord.ApplicationCommandCreate(discord.State.User.ID, guildID, v)
+		if err != nil {
+			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+		}
+	}
+
 	defer discord.Close()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+	log.Println("Press Ctrl+C to exit")
+	<-stop
+
+	if removeCommands {
+		addedCommands, err := discord.ApplicationCommands(discord.State.Application.ID, guildID)
+		if err != nil {
+			log.Printf("Failed to fetch commands %v", err)
+		}
+
+		log.Printf("Deleting commands from guild %v", guildID)
+		for _, c := range addedCommands {
+			err := discord.ApplicationCommandDelete(discord.State.User.ID, guildID, c.ID)
+			if err != nil {
+				log.Printf("Cannot delete '%v' command: %v", c.Name, err)
+			}
+		}
+
+	}
+
+	log.Println("Gracefully shutting down.")
 }
