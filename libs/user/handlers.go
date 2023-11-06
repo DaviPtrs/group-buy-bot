@@ -3,12 +3,10 @@ package user
 import (
 	"fmt"
 	"log"
-	"net/url"
 	"os"
-	"regexp"
-	"strconv"
 	"strings"
 
+	"github.com/DaviPtrs/group-buy-bot/libs/item"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 	uuid "github.com/satori/go.uuid"
@@ -137,7 +135,7 @@ func addModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err := receivedItemToApproval(s, i.Member.User.ID, &data)
 	var submit_message string
 	if err != nil {
-		valErr, ok := err.(*ValidationError)
+		valErr, ok := err.(*item.InvalidItem)
 		if ok {
 			submit_message = "Não foi possível adicionar seu item na lista.\n"
 			submit_message += fmt.Sprintf("Campo \"%v\" é inválido!", valErr.InvalidField)
@@ -163,49 +161,18 @@ func addModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func receivedItemToApproval(s *discordgo.Session, userID string, data *discordgo.ModalSubmitInteractionData) error {
-	url, err := url.ParseRequestURI(data.Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value)
+	item, err := item.ParseFromModal(data)
 	if err != nil {
-		return &ValidationError{InvalidField: "product-url", Err: err}
+		return err
 	}
-
-	numbersRegex, _ := regexp.Compile(`[-+]?(?:\d*\.*\d+)`)
-
-	pricePlain := data.Components[1].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
-	pricePlain = strings.ReplaceAll(pricePlain, ",", ".")
-	priceStr := numbersRegex.FindString(pricePlain)
-	price, err := strconv.ParseFloat(priceStr, 32)
-	if err != nil {
-		return &ValidationError{InvalidField: "price", Err: err}
-	}
-
-	weightPlain := data.Components[2].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
-	weightPlain = strings.ToLower(weightPlain)
-	weightPlain = strings.ReplaceAll(weightPlain, ",", ".")
-	weightStr := numbersRegex.FindString(weightPlain)
-	weight, err := strconv.ParseFloat(weightStr, 32)
-	if err != nil {
-		return &ValidationError{InvalidField: "weight", Err: err}
-	}
-	if strings.Contains(weightPlain, "k") {
-		weight *= 2.205
-	}
-
-	taxPlain := data.Components[3].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
-	taxPlain = strings.ToLower(taxPlain)
-	tax, err := strconv.ParseFloat(numbersRegex.FindString(taxPlain), 32)
-	if err != nil {
-		return &ValidationError{InvalidField: "tax-rate", Err: err}
-	}
-
-	location := data.Components[4].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("Item received from <@%s>\n\n", userID))
-	sb.WriteString(fmt.Sprintf("**Link:** %s\n\n", url))
-	sb.WriteString(fmt.Sprintf("**Price:** $ %.2f\n\n", price))
-	sb.WriteString(fmt.Sprintf("**Weight:** %.2f lbs\n\n", weight))
-	sb.WriteString(fmt.Sprintf("**Estimated Tax:** %v %%\n\n", tax))
-	sb.WriteString(fmt.Sprintf("**Buyers location:** %v\n\n", location))
+	sb.WriteString(fmt.Sprintf("**Link:** %s\n\n", item.URL))
+	sb.WriteString(fmt.Sprintf("**Price:** $ %.2f\n\n", item.Price))
+	sb.WriteString(fmt.Sprintf("**Weight:** %.2f lbs\n\n", item.Weight))
+	sb.WriteString(fmt.Sprintf("**Estimated Tax:** %v %%\n\n", item.TaxRate))
+	sb.WriteString(fmt.Sprintf("**Buyer's location:** %v\n\n", item.BuyerLocation))
 
 	_, err = s.ChannelMessageSend(ApprovalChannelID, sb.String())
 
