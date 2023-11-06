@@ -37,17 +37,24 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to create session: %v", err)
 	}
-
-	discord.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if h, ok := user.CommandHandlers()[i.ApplicationCommandData().Name]; ok {
-			h(s, i)
-		}
-	})
 }
 
 func main() {
 	discord.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
+	})
+
+	discord.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		switch i.Type {
+		case discordgo.InteractionApplicationCommand:
+			if h, ok := user.CommandHandlers()[i.ApplicationCommandData().Name]; ok {
+				h(s, i)
+			}
+		case discordgo.InteractionModalSubmit:
+			for _, h := range user.ModalHandlers() {
+				h(s, i)
+			}
+		}
 	})
 
 	err := discord.Open()
