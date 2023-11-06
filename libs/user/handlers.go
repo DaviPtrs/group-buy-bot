@@ -3,13 +3,27 @@ package user
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/DaviPtrs/group-buy-bot/libs/approval"
 	"github.com/DaviPtrs/group-buy-bot/libs/item"
 	"github.com/bwmarrin/discordgo"
+	"github.com/joho/godotenv"
 	uuid "github.com/satori/go.uuid"
 )
+
+var UserChannelID string
+
+func init() {
+	godotenv.Load()
+
+	var ok bool
+	UserChannelID, ok = os.LookupEnv("DISCORD_BOT_USER_CHANNEL_ID")
+	if !ok {
+		log.Fatal("User Channel ID not found")
+	}
+}
 
 func CommandHandlers() map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	return map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
