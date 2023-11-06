@@ -139,8 +139,6 @@ func addModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if ok {
 			submit_message = "Não foi possível adicionar seu item na lista.\n"
 			submit_message += fmt.Sprintf("Campo \"%v\" é inválido!", valErr.InvalidField)
-		} else {
-			log.Panicf("Error on sending item to approval: %v", err)
 		}
 	} else {
 		submit_message = "Obrigado por enviar seu item pra lista do group buy.\n"
@@ -176,5 +174,9 @@ func receivedItemToApproval(s *discordgo.Session, userID string, data *discordgo
 
 	_, err = s.ChannelMessageSend(ApprovalChannelID, sb.String())
 
-	return err
+	if err != nil {
+		log.Panicf("Error on sending item to approval: %v", err)
+	}
+
+	return nil
 }
