@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/DaviPtrs/group-buy-bot/libs/approval"
 	"github.com/DaviPtrs/group-buy-bot/libs/user"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -55,12 +56,17 @@ func main() {
 				h(s, i)
 			}
 		case discordgo.InteractionMessageComponent:
-			for _, e := range i.Message.Embeds {
-				for _, field := range e.Fields {
-					log.Print(field.Name)
-					log.Print(field.Value)
-				}
+			for _, h := range approval.ButtonHandlers() {
+				h(s, i)
 			}
+			// data := i.MessageComponentData()
+			// log.Print(data)
+			// for _, e := range i.Message.Embeds {
+			// 	for _, field := range e.Fields {
+			// 		log.Print(field.Name)
+			// 		log.Print(field.Value)
+			// 	}
+			// }
 		}
 	})
 
