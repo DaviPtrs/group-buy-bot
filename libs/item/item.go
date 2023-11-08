@@ -69,6 +69,9 @@ func (item *Item) ParseToEmbedFields() *[]*discordgo.MessageEmbedField {
 			Name: "ID", Value: item.CustomID,
 		},
 		{
+			Name: "Buyer", Value: fmt.Sprintf("<@%s>", item.UserID),
+		},
+		{
 			Name: "URL", Value: item.URL,
 		},
 		{
