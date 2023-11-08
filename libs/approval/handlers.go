@@ -90,7 +90,7 @@ func rejectModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Fields: *model.Item.ParseToEmbedFields(),
 	}
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
 			Embeds:  []*discordgo.MessageEmbed{&embed},
 			Content: submit_message,
