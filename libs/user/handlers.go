@@ -52,6 +52,11 @@ func ModalHandlers() map[string]func(s *discordgo.Session, i *discordgo.Interact
 // }
 
 func addCommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.ChannelID != UserChannelID {
+		WrongChannelResponse(s, i.Interaction, UserChannelID)
+		return
+	}
+
 	uuid := uuid.NewV4()
 	responseData := discordgo.InteractionResponseData{
 		CustomID: "group_buy_item_" + i.Interaction.Member.User.ID + "_" + uuid.String(),
