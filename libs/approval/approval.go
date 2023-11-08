@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/DaviPtrs/group-buy-bot/libs/item"
+	"github.com/DaviPtrs/group-buy-bot/libs/mongorm"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 )
@@ -20,6 +21,16 @@ func init() {
 	if !ok {
 		log.Fatal("Approval Channel ID not found")
 	}
+	seedDB()
+}
+
+func seedDB() {
+	client := mongorm.ConnectedClient()
+	coll := client.Database(mongorm.DatabaseName).Collection("items_to_approval")
+
+	mongorm.AddIndexes(coll, item.Indexes)
+
+	defer mongorm.DisconnectClient(client)
 }
 
 func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.ModalSubmitInteractionData) error {
@@ -27,6 +38,7 @@ func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.Mod
 	if err != nil {
 		return err
 	}
+	log.Print(item)
 
 	embed := discordgo.MessageEmbed{
 		Fields: *item.ParseToEmbedFields(),

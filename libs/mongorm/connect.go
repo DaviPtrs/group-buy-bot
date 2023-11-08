@@ -11,6 +11,7 @@ import (
 )
 
 var mongoURI string
+var DatabaseName string
 
 func init() {
 	godotenv.Load()
@@ -18,6 +19,11 @@ func init() {
 	mongoURI, ok = os.LookupEnv("DISCORD_BOT_MONGODB_URI")
 	if !ok {
 		log.Fatal("Could not find MONGODB URI")
+	}
+
+	DatabaseName, ok = os.LookupEnv("DISCORD_BOT_MONGODB_DATABASE_NAME")
+	if !ok {
+		log.Fatal("Could not find Database Name")
 	}
 }
 
@@ -34,14 +40,5 @@ func ConnectWithURI(uri string) (*mongo.Client, error) {
 		return nil, err
 	}
 
-	log.Print("Successfully connected to MongoDB")
 	return client, nil
-}
-
-func ConnectedClient() *mongo.Client {
-	client, err := ConnectWithURI(mongoURI)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return client
 }
