@@ -11,13 +11,13 @@ import (
 )
 
 type Item struct {
-	CustomID      string
-	UserID        string
-	URL           string
-	Price         float32
-	Weight        float32
-	TaxRate       int
-	BuyerLocation string
+	CustomID      string  `bson:"custom_id"`
+	UserID        string  `bson:"user_id"`
+	URL           string  `bson:"url"`
+	Price         float32 `bson:"price"`
+	Weight        float32 `bson:"weight"`
+	TaxRate       int     `bson:"tax_rate"`
+	BuyerLocation string  `bson:"buyer_location"`
 }
 
 func ParseFromModal(data *discordgo.ModalSubmitInteractionData) (*Item, error) {
