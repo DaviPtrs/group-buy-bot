@@ -1,7 +1,6 @@
 package approval
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -80,7 +79,7 @@ func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.Mod
 	coll := client.Database(mongorm.DatabaseName).Collection(ToApprovalCollectionName)
 
 	model := i.GetModel()
-	err = model.Create(context.Background(), coll, &model)
+	err = model.Create(coll, &model)
 	if err != nil {
 		log.Fatalf("Failed to create to_approval item: %v", err)
 	}

@@ -8,17 +8,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+var DefaultContext = context.Background()
+
 type Model struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
 	CreatedAt time.Time          `bson:"created_at"`
 	UpdatedAt time.Time          `bson:"updated_at"`
 }
 
-func (m *Model) Create(ctx context.Context, coll *mongo.Collection, model interface{}) error {
+func (m *Model) Create(coll *mongo.Collection, model interface{}) error {
 	m.CreatedAt = time.Now()
 	m.UpdatedAt = time.Now()
 
-	res, err := coll.InsertOne(ctx, model)
+	res, err := coll.InsertOne(DefaultContext, model)
 	if err != nil {
 		return err
 	}
@@ -27,8 +29,8 @@ func (m *Model) Create(ctx context.Context, coll *mongo.Collection, model interf
 	return nil
 }
 
-func (m *Model) Read(ctx context.Context, coll *mongo.Collection, filter interface{}, result interface{}) error {
-	err := coll.FindOne(ctx, filter).Decode(result)
+func (m *Model) Read(coll *mongo.Collection, filter interface{}, result interface{}) error {
+	err := coll.FindOne(DefaultContext, filter).Decode(result)
 	if err != nil {
 		return err
 	}
@@ -36,10 +38,10 @@ func (m *Model) Read(ctx context.Context, coll *mongo.Collection, filter interfa
 	return nil
 }
 
-func (m *Model) Update(ctx context.Context, coll *mongo.Collection, filter interface{}, update interface{}) error {
+func (m *Model) Update(coll *mongo.Collection, filter interface{}, update interface{}) error {
 	m.UpdatedAt = time.Now()
 
-	_, err := coll.UpdateOne(ctx, filter, update)
+	_, err := coll.UpdateOne(DefaultContext, filter, update)
 	if err != nil {
 		return err
 	}
@@ -47,8 +49,8 @@ func (m *Model) Update(ctx context.Context, coll *mongo.Collection, filter inter
 	return nil
 }
 
-func (m *Model) Delete(ctx context.Context, coll *mongo.Collection, filter interface{}) error {
-	_, err := coll.DeleteOne(ctx, filter)
+func (m *Model) Delete(coll *mongo.Collection, filter interface{}) error {
+	_, err := coll.DeleteOne(DefaultContext, filter)
 	if err != nil {
 		return err
 	}
