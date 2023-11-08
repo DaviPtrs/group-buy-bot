@@ -99,3 +99,15 @@ func UserIDfromItemCustomID(customID string) string {
 	}
 	return ""
 }
+
+func (i *Item) GetModel() *ItemModel {
+	var model *ItemModel = new(ItemModel)
+	model.CustomID = i.CustomID
+	model.UserID = i.UserID
+	model.URL = i.URL
+	model.Price = i.Price
+	model.Weight = i.Weight
+	model.TaxRate = i.TaxRate
+	model.BuyerLocation = i.BuyerLocation
+	return model
+}

@@ -1,6 +1,7 @@
 package approval
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +14,8 @@ import (
 )
 
 var ApprovalChannelID string
+var ToApprovalCollectionName = "items_to_approval"
+var ApprovedCollectionName = "items_approved"
 
 func init() {
 	godotenv.Load()
@@ -29,24 +32,24 @@ func seedDB() {
 	client := mongorm.ConnectedClient()
 
 	var coll *mongo.Collection
-	coll = client.Database(mongorm.DatabaseName).Collection("items_to_approval")
+	coll = client.Database(mongorm.DatabaseName).Collection(ToApprovalCollectionName)
 	mongorm.AddIndexes(coll, item.Indexes)
 
-	coll = client.Database(mongorm.DatabaseName).Collection("items_approved")
+	coll = client.Database(mongorm.DatabaseName).Collection(ApprovedCollectionName)
 	mongorm.AddIndexes(coll, item.Indexes)
 
 	defer mongorm.DisconnectClient(client)
 }
 
 func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.ModalSubmitInteractionData) error {
-	item, err := item.ParseFromModal(data)
+	i, err := item.ParseFromModal(data)
 	if err != nil {
 		return err
 	}
-	log.Print(item)
+	log.Print(i)
 
 	embed := discordgo.MessageEmbed{
-		Fields: *item.ParseToEmbedFields(),
+		Fields: *i.ParseToEmbedFields(),
 	}
 
 	message := discordgo.MessageSend{
@@ -56,13 +59,13 @@ func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.Mod
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.Button{
-						CustomID: item.CustomID + "_approve_btn",
+						CustomID: i.CustomID + "_approve_btn",
 						Label:    "Approve",
 						Style:    discordgo.PrimaryButton,
 						Disabled: false,
 					},
 					discordgo.Button{
-						CustomID: item.CustomID + "_reject_btn",
+						CustomID: i.CustomID + "_reject_btn",
 						Label:    "Reject",
 						Style:    discordgo.DangerButton,
 						Disabled: false,
@@ -71,10 +74,21 @@ func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.Mod
 			},
 		},
 	}
+	client := mongorm.ConnectedClient()
+	defer mongorm.DisconnectClient(client)
+
+	coll := client.Database(mongorm.DatabaseName).Collection(ToApprovalCollectionName)
+
+	model := i.GetModel()
+	err = model.Create(context.Background(), coll, &model)
+	if err != nil {
+		log.Fatalf("Failed to create to_approval item: %v", err)
+	}
+
 	_, err = s.ChannelMessageSendComplex(ApprovalChannelID, &message)
 
 	if err != nil {
-		log.Panicf("Error on sending item to approval: %v", err)
+		log.Fatalf("Error on sending item to approval: %v", err)
 	}
 
 	return nil
