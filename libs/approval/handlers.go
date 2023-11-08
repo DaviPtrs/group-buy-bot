@@ -46,12 +46,11 @@ func rejectItemHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	coll := client.Database(mongorm.DatabaseName).Collection(ToApprovalCollectionName)
 
-	var model *item.ItemModel
-	err := model.Read(context.TODO(), coll, bson.M{"item.custom_id": itemID}, &model)
-	if err != nil {
-		log.Fatalf("Error on read item %v: %v", itemID, err)
-	}
-	log.Print(model)
+	var model *item.ItemModel = new(item.ItemModel)
+	err := model.Delete(context.Background(), coll, bson.M{"item.custom_id": itemID})
 
-	model.Delete(context.Background(), coll, bson.M{"item.custom_id": itemID})
+	if err != nil {
+		log.Fatalf("Failed to remove item %v from to_approval list: %v", itemID, err)
+	}
+
 }
