@@ -9,6 +9,7 @@ import (
 	"github.com/DaviPtrs/group-buy-bot/libs/mongorm"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var ApprovalChannelID string
@@ -26,8 +27,12 @@ func init() {
 
 func seedDB() {
 	client := mongorm.ConnectedClient()
-	coll := client.Database(mongorm.DatabaseName).Collection("items_to_approval")
 
+	var coll *mongo.Collection
+	coll = client.Database(mongorm.DatabaseName).Collection("items_to_approval")
+	mongorm.AddIndexes(coll, item.Indexes)
+
+	coll = client.Database(mongorm.DatabaseName).Collection("items_approved")
 	mongorm.AddIndexes(coll, item.Indexes)
 
 	defer mongorm.DisconnectClient(client)

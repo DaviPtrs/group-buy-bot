@@ -11,8 +11,11 @@ var trueVar = true // why???? WHY DO I HAVE TO DO THIS?
 
 var Indexes = []mongo.IndexModel{
 	{
-		Keys:    bson.D{{Key: "name", Value: -1}},
+		Keys:    bson.D{{Key: "custom_id", Value: 1}},
 		Options: &options.IndexOptions{Unique: &trueVar},
+	},
+	{
+		Keys: bson.D{{Key: "user_id", Value: 1}},
 	},
 }
 
