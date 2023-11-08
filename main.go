@@ -40,35 +40,31 @@ func init() {
 	}
 }
 
+func interactionCreateHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	switch i.Type {
+	case discordgo.InteractionApplicationCommand:
+		if h, ok := user.CommandHandlers()[i.ApplicationCommandData().Name]; ok {
+			h(s, i)
+		}
+	case discordgo.InteractionModalSubmit:
+		for _, h := range user.ModalHandlers() {
+			h(s, i)
+		}
+		for _, h := range approval.ModalHandlers() {
+			h(s, i)
+		}
+	case discordgo.InteractionMessageComponent:
+		for _, h := range approval.ButtonHandlers() {
+			h(s, i)
+		}
+	}
+}
+
 func main() {
 	discord.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
-
-	discord.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		switch i.Type {
-		case discordgo.InteractionApplicationCommand:
-			if h, ok := user.CommandHandlers()[i.ApplicationCommandData().Name]; ok {
-				h(s, i)
-			}
-		case discordgo.InteractionModalSubmit:
-			for _, h := range user.ModalHandlers() {
-				h(s, i)
-			}
-		case discordgo.InteractionMessageComponent:
-			for _, h := range approval.ButtonHandlers() {
-				h(s, i)
-			}
-			// data := i.MessageComponentData()
-			// log.Print(data)
-			// for _, e := range i.Message.Embeds {
-			// 	for _, field := range e.Fields {
-			// 		log.Print(field.Name)
-			// 		log.Print(field.Value)
-			// 	}
-			// }
-		}
-	})
+	discord.AddHandler(interactionCreateHandler)
 
 	err := discord.Open()
 	if err != nil {
