@@ -14,13 +14,11 @@ type Model struct {
 	UpdatedAt time.Time          `bson:"updated_at"`
 }
 
-func (m *Model) Create(ctx context.Context, db *mongo.Database, collectionName string, model interface{}) error {
-	collection := db.Collection(collectionName)
-
+func (m *Model) Create(ctx context.Context, coll *mongo.Collection, model interface{}) error {
 	m.CreatedAt = time.Now()
 	m.UpdatedAt = time.Now()
 
-	res, err := collection.InsertOne(ctx, model)
+	res, err := coll.InsertOne(ctx, model)
 	if err != nil {
 		return err
 	}
@@ -29,10 +27,8 @@ func (m *Model) Create(ctx context.Context, db *mongo.Database, collectionName s
 	return nil
 }
 
-func (m *Model) Read(ctx context.Context, db *mongo.Database, collectionName string, filter interface{}, result interface{}) error {
-	collection := db.Collection(collectionName)
-
-	err := collection.FindOne(ctx, filter).Decode(result)
+func (m *Model) Read(ctx context.Context, coll *mongo.Collection, filter interface{}, result interface{}) error {
+	err := coll.FindOne(ctx, filter).Decode(result)
 	if err != nil {
 		return err
 	}
@@ -40,12 +36,10 @@ func (m *Model) Read(ctx context.Context, db *mongo.Database, collectionName str
 	return nil
 }
 
-func (m *Model) Update(ctx context.Context, db *mongo.Database, collectionName string, filter interface{}, update interface{}) error {
-	collection := db.Collection(collectionName)
-
+func (m *Model) Update(ctx context.Context, coll *mongo.Collection, filter interface{}, update interface{}) error {
 	m.UpdatedAt = time.Now()
 
-	_, err := collection.UpdateOne(ctx, filter, update)
+	_, err := coll.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
@@ -53,9 +47,8 @@ func (m *Model) Update(ctx context.Context, db *mongo.Database, collectionName s
 	return nil
 }
 
-func (m *Model) Delete(ctx context.Context, db *mongo.Database, collectionName string, filter interface{}) error {
-	collection := db.Collection(collectionName)
-	_, err := collection.DeleteOne(ctx, filter)
+func (m *Model) Delete(ctx context.Context, coll *mongo.Collection, filter interface{}) error {
+	_, err := coll.DeleteOne(ctx, filter)
 	if err != nil {
 		return err
 	}
