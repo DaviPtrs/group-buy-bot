@@ -38,20 +38,6 @@ func ModalHandlers() map[string]func(s *discordgo.Session, i *discordgo.Interact
 	}
 }
 
-// func addCommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-// 	responseData := discordgo.InteractionResponseData{
-// 		Content: "Add command invoked. Here's your response!",
-// 		Flags:   discordgo.MessageFlagsEphemeral,
-// 	}
-// 	log.Print("handler called")
-// 	response := discordgo.InteractionResponse{
-// 		Type: discordgo.InteractionResponseChannelMessageWithSource,
-// 		Data: &responseData,
-// 	}
-
-// 	s.InteractionRespond(i.Interaction, &response)
-// }
-
 func addCommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if i.ChannelID != UserChannelID {
 		WrongChannelResponse(s, i.Interaction, UserChannelID)
