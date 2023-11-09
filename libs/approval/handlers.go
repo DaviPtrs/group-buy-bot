@@ -46,6 +46,8 @@ func approveModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err != nil {
 		log.Panicf("Unable to respond to modal %v: %v", data.CustomID, err)
 	}
+
+	SendItemFeedback(s, &model.Item, nil)
 }
 
 func approveItemHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -109,6 +111,8 @@ func rejectModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err != nil {
 		log.Panicf("Unable to respond to modal %v: %v", data.CustomID, err)
 	}
+
+	SendItemFeedback(s, &model.Item, &reason)
 }
 
 func rejectItemHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
