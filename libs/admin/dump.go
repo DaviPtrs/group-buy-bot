@@ -48,7 +48,7 @@ func GenerateCSV(modelList *[]*item.ItemModel) []byte {
 
 	for _, i := range *modelList {
 		row := []string{
-			i.UserID,
+			GetUserName(i.UserID),
 			fmt.Sprintf("%.2f", i.Price),
 			fmt.Sprintf("%.2f", i.Weight),
 			fmt.Sprintf("%.2f", float32(i.TaxRate)/100),

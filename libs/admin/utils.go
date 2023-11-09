@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/DaviPtrs/group-buy-bot/libs/bot/session"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -21,4 +22,14 @@ func WrongChannelResponse(s *discordgo.Session, i *discordgo.Interaction, rightC
 	}
 	time.Sleep(time.Second * 5)
 	s.InteractionResponseDelete(i)
+}
+
+func GetUserName(id string) string {
+	s := session.GetDiscordSession()
+	guildID := session.GetGuildID()
+	member, err := s.GuildMember(guildID, id)
+	if err != nil {
+		log.Fatalf("could not find user %s in guild %s", id, guildID)
+	}
+	return member.User.String()
 }
