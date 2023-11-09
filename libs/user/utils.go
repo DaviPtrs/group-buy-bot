@@ -2,10 +2,10 @@ package user
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 func WrongChannelResponse(s *discordgo.Session, i *discordgo.Interaction, rightChannelID string) {
@@ -18,8 +18,13 @@ func WrongChannelResponse(s *discordgo.Session, i *discordgo.Interaction, rightC
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		logrus.Errorf("Error on sending User \"Wrong Channel\" Message: %v", err)
+		return
 	}
+
 	time.Sleep(time.Second * 10)
-	s.InteractionResponseDelete(i)
+	err = s.InteractionResponseDelete(i)
+	if err != nil {
+		logrus.Errorf("Error on deleting User \"Wrong Channel\" response: %v", err)
+	}
 }

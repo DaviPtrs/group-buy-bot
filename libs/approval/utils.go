@@ -2,7 +2,6 @@ package approval
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/DaviPtrs/group-buy-bot/libs/item"
@@ -11,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func SendItemFeedback(s *discordgo.Session, i *item.Item, reasoning *string) {
+func SendItemFeedback(s *discordgo.Session, i *item.Item, reasoning *string) error {
 	var sb strings.Builder
 	if reasoning == nil {
 		sb.WriteString("**Seu item foi APROVADO para o Group buy!**\n\n")
@@ -26,12 +25,18 @@ func SendItemFeedback(s *discordgo.Session, i *item.Item, reasoning *string) {
 
 	st, err := s.UserChannelCreate(i.UserID)
 	if err != nil {
-		log.Fatalf("Failed to create DM with user %v: %v", i.UserID, err)
+		return fmt.Errorf("failed to create DM with user %v: %v", i.UserID, err)
 	}
-	s.ChannelMessageSend(st.ID, sb.String())
+
+	_, err = s.ChannelMessageSend(st.ID, sb.String())
+	if err != nil {
+		return fmt.Errorf("failed to send feedback message to user %v: %v", i.UserID, err)
+	}
+
+	return nil
 }
 
-func popFromToApproval(id string) *item.ItemModel {
+func popFromToApproval(id string) (*item.ItemModel, error) {
 	client := mongorm.ConnectedClient()
 	defer mongorm.DisconnectClient(client)
 
@@ -40,26 +45,23 @@ func popFromToApproval(id string) *item.ItemModel {
 	var model *item.ItemModel = new(item.ItemModel)
 	err := model.Read(coll, bson.M{"item.custom_id": id}, model)
 	if err != nil {
-		log.Fatalf("Failed to find item %v: %v", id, err)
-		return nil
+		return nil, fmt.Errorf("failed to find item %v: %v", id, err)
 	}
 
 	err = model.Delete(coll, bson.M{"item.custom_id": id})
 	if err != nil {
-		log.Fatalf("Failed to remove item %v from to_approval list: %v", id, err)
+		return nil, fmt.Errorf("failed to remove item %v from to_approval list: %v", id, err)
 	}
-	return model
+	return model, nil
 }
 
-func pushToApproved(model *item.ItemModel) {
+func pushToApproved(model *item.ItemModel) error {
 	client := mongorm.ConnectedClient()
 	defer mongorm.DisconnectClient(client)
 
 	coll := client.Database(mongorm.DatabaseName).Collection(ApprovedCollectionName)
 	err := model.Create(coll, model)
-	if err != nil {
-		log.Fatalf("Failed to create approved item: %v", err)
-	}
+	return err
 }
 
 func getItemIDfromEmbeds(embeds []*discordgo.MessageEmbed) string {

@@ -2,10 +2,10 @@ package approval
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 func ButtonHandlers() map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -29,14 +29,21 @@ func approveModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	itemID := strings.TrimPrefix(data.CustomID, "approved_")
-	model := popFromToApproval(itemID)
-	pushToApproved(model)
+	model, err := popFromToApproval(itemID)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+	if err := pushToApproved(model); err != nil {
+		logrus.Errorf("Failed to create approved item: %v", err)
+		return
+	}
 
 	submit_message := "Item approved!"
 	embed := discordgo.MessageEmbed{
 		Fields: *model.Item.ParseToEmbedFields(),
 	}
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
 			Embeds:  []*discordgo.MessageEmbed{&embed},
@@ -44,10 +51,13 @@ func approveModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 	if err != nil {
-		log.Panicf("Unable to respond to modal %v: %v", data.CustomID, err)
+		logrus.Errorf("Unable to respond to modal %v: %v", data.CustomID, err)
+		return
 	}
 
-	SendItemFeedback(s, &model.Item, nil)
+	if err := SendItemFeedback(s, &model.Item, nil); err != nil {
+		logrus.Error(err)
+	}
 }
 
 func approveItemHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -58,7 +68,8 @@ func approveItemHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	itemID := getItemIDfromEmbeds(i.Message.Embeds)
 	if itemID == "" {
-		log.Fatal("There's no item in this message")
+		logrus.Errorf("Unable to fetch item %v from message", itemID)
+		return
 	}
 
 	responseData := discordgo.InteractionResponseData{
@@ -83,7 +94,7 @@ func approveItemHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	err := s.InteractionRespond(i.Interaction, &response)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Errorf("Failed to send response modal %v: %v", responseData.CustomID, err)
 	}
 }
 
@@ -94,14 +105,18 @@ func rejectModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	itemID := strings.TrimPrefix(data.CustomID, "rejected_")
-	model := popFromToApproval(itemID)
+	model, err := popFromToApproval(itemID)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
 
 	reason := data.Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 	submit_message := fmt.Sprintf("Item rejected! Reason: %v", reason)
 	embed := discordgo.MessageEmbed{
 		Fields: *model.Item.ParseToEmbedFields(),
 	}
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
 			Embeds:  []*discordgo.MessageEmbed{&embed},
@@ -109,10 +124,13 @@ func rejectModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 	if err != nil {
-		log.Panicf("Unable to respond to modal %v: %v", data.CustomID, err)
+		logrus.Errorf("Unable to respond to modal %v: %v", data.CustomID, err)
+		return
 	}
 
-	SendItemFeedback(s, &model.Item, &reason)
+	if err := SendItemFeedback(s, &model.Item, &reason); err != nil {
+		logrus.Error(err)
+	}
 }
 
 func rejectItemHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -123,7 +141,8 @@ func rejectItemHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	itemID := getItemIDfromEmbeds(i.Message.Embeds)
 	if itemID == "" {
-		log.Fatal("There's no item in this message")
+		logrus.Errorf("Unable to fetch item %v from message", itemID)
+		return
 	}
 
 	responseData := discordgo.InteractionResponseData{
@@ -150,7 +169,6 @@ func rejectItemHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	err := s.InteractionRespond(i.Interaction, &response)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Errorf("Failed to send response modal %v: %v", responseData.CustomID, err)
 	}
-
 }

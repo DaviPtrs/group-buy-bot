@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"log"
 	"os"
 	"os/signal"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/DaviPtrs/group-buy-bot/libs/user"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 )
 
 var discord *discordgo.Session
@@ -56,27 +56,27 @@ func registerCommands(s *discordgo.Session) {
 	for _, v := range user.Commands {
 		_, err := discord.ApplicationCommandCreate(discord.State.User.ID, guildID, v)
 		if err != nil {
-			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+			logrus.Errorf("Cannot create '%v' command: %v", v.Name, err)
 		}
 	}
 
 	for _, v := range admin.Commands {
 		_, err := discord.ApplicationCommandCreate(discord.State.User.ID, guildID, v)
 		if err != nil {
-			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+			logrus.Errorf("Cannot create '%v' command: %v", v.Name, err)
 		}
 	}
 }
 
 func Run() {
 	discord.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
+		logrus.Infof("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
 	discord.AddHandler(interactionCreateHandler)
 
 	err := discord.Open()
 	if err != nil {
-		log.Fatalf("Cannot open the session: %v", err)
+		logrus.Panicf("Cannot open the session: %v", err)
 	}
 
 	registerCommands(discord)
@@ -85,24 +85,25 @@ func Run() {
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
-	log.Println("Press Ctrl+C to exit")
+	logrus.Println("Press Ctrl+C to exit")
 	<-stop
 
 	if removeCommands {
 		addedCommands, err := discord.ApplicationCommands(discord.State.Application.ID, guildID)
 		if err != nil {
-			log.Printf("Failed to fetch commands %v", err)
+			logrus.Errorf("Failed to fetch commands %v", err)
+			return
 		}
 
-		log.Printf("Deleting commands from guild %v", guildID)
+		logrus.Infof("Deleting commands from guild %v", guildID)
 		for _, c := range addedCommands {
 			err := discord.ApplicationCommandDelete(discord.State.User.ID, guildID, c.ID)
 			if err != nil {
-				log.Printf("Cannot delete '%v' command: %v", c.Name, err)
+				logrus.Errorf("Cannot delete '%v' command: %v", c.Name, err)
 			}
 		}
 
 	}
 
-	log.Println("Gracefully shutting down.")
+	logrus.Infof("Gracefully shutting down.")
 }

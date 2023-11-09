@@ -2,10 +2,10 @@ package mongorm
 
 import (
 	"context"
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -18,12 +18,12 @@ func init() {
 	var ok bool
 	mongoURI, ok = os.LookupEnv("DISCORD_BOT_MONGODB_URI")
 	if !ok {
-		log.Fatal("Could not find MONGODB URI")
+		logrus.Fatal("Could not find MONGODB URI")
 	}
 
 	DatabaseName, ok = os.LookupEnv("DISCORD_BOT_MONGODB_DATABASE_NAME")
 	if !ok {
-		log.Fatal("Could not find Database Name")
+		logrus.Fatal("Could not find Database Name")
 	}
 }
 

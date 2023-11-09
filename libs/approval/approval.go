@@ -2,13 +2,13 @@ package approval
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/DaviPtrs/group-buy-bot/libs/item"
 	"github.com/DaviPtrs/group-buy-bot/libs/mongorm"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -22,7 +22,7 @@ func init() {
 	var ok bool
 	ApprovalChannelID, ok = os.LookupEnv("DISCORD_BOT_APPROVAL_CHANNEL_ID")
 	if !ok {
-		log.Fatal("Approval Channel ID not found")
+		logrus.Fatal("Approval Channel ID not found")
 	}
 	seedDB()
 }
@@ -45,7 +45,7 @@ func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.Mod
 	if err != nil {
 		return err
 	}
-	log.Print(i)
+	// logrus.Print(i)
 
 	embed := discordgo.MessageEmbed{
 		Fields: *i.ParseToEmbedFields(),
@@ -82,13 +82,13 @@ func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.Mod
 
 	err = model.Create(coll, model)
 	if err != nil {
-		log.Fatalf("Failed to create to_approval item: %v", err)
+		return fmt.Errorf("failed to create to_approval item: %v", err)
 	}
 
 	_, err = s.ChannelMessageSendComplex(ApprovalChannelID, &message)
 
 	if err != nil {
-		log.Fatalf("Error on sending item to approval: %v", err)
+		return fmt.Errorf("error on sending item to approval channel: %v", err)
 	}
 
 	return nil

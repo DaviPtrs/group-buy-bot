@@ -6,6 +6,7 @@ require (
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/joho/godotenv v1.5.1
 	github.com/satori/go.uuid v1.2.0
+	github.com/sirupsen/logrus v1.9.3
 	go.mongodb.org/mongo-driver v1.12.1
 )
 

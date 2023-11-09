@@ -2,7 +2,6 @@ package user
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 )
 
 var UserChannelID string
@@ -22,7 +22,7 @@ func init() {
 	var ok bool
 	UserChannelID, ok = os.LookupEnv("DISCORD_BOT_USER_CHANNEL_ID")
 	if !ok {
-		log.Fatal("User Channel ID not found")
+		logrus.Fatal("User Channel ID not found")
 	}
 }
 
@@ -47,8 +47,7 @@ func addCommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	uuid := uuid.NewV4()
 	responseData := discordgo.InteractionResponseData{
 		CustomID: "group_buy_item_" + i.Interaction.Member.User.ID + "_" + uuid.String(),
-		// Flags:    discordgo.MessageFlagsEphemeral,
-		Title: "Group buy - Request new product",
+		Title:    "Group buy - Request new product",
 		Components: []discordgo.MessageComponent{
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
@@ -114,7 +113,7 @@ func addCommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	err := s.InteractionRespond(i.Interaction, &response)
 	if err != nil {
-		log.Panicf("Error on responding with modal: %v", err)
+		logrus.Errorf("Error on responding with modal: %v", err)
 	}
 }
 
@@ -124,7 +123,7 @@ func addModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	log.Printf("Item received from user id: %v", i.Member.User.ID)
+	logrus.Infof("Item received from user %v", i.Member.User.String())
 	err := approval.SendItemToApproval(s, i.Member.User.ID, &data)
 	var submit_message string
 	if err != nil {
@@ -132,6 +131,9 @@ func addModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if ok {
 			submit_message = "Não foi possível adicionar seu item na lista.\n"
 			submit_message += fmt.Sprintf("Campo \"%v\" é inválido!", valErr.InvalidField)
+		} else {
+			logrus.Errorf("Unable to send item to approval: %v", err)
+			return
 		}
 	} else {
 		submit_message = "Obrigado por enviar seu item pra lista do group buy.\n"
@@ -146,9 +148,13 @@ func addModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 	if err != nil {
-		log.Panicf("Unable to respond to modal %v: %v", data.CustomID, err)
+		logrus.Errorf("Unable to respond to modal %v: %v", data.CustomID, err)
+		return
 	}
 
 	time.Sleep(time.Second * 10)
-	s.InteractionResponseDelete(i.Interaction)
+	err = s.InteractionResponseDelete(i.Interaction)
+	if err != nil {
+		logrus.Errorf("Error on deleting \"%v modal confirmation\" response: %v", data.CustomID, err)
+	}
 }

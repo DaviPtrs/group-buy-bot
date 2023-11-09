@@ -2,29 +2,29 @@ package mongorm
 
 import (
 	"context"
-	"log"
 
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func ConnectedClient() *mongo.Client {
 	client, err := ConnectWithURI(mongoURI)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
-	log.Print("Successfully connected to MongoDB")
+	logrus.Infof("Successfully connected to MongoDB")
 	return client
 }
 
 func DisconnectClient(client *mongo.Client) {
 	if err := client.Disconnect(context.TODO()); err != nil {
-		log.Panicf("Error on disconnect from MongoDB: %v", err)
+		logrus.Errorf("Error on disconnect from MongoDB: %v", err)
 	}
 }
 
 func AddIndexes(coll *mongo.Collection, indexes []mongo.IndexModel) {
 	_, err := coll.Indexes().CreateMany(context.TODO(), indexes)
 	if err != nil {
-		log.Fatalf("Failed to create indexes on collection %v: %v", coll.Name(), err)
+		logrus.Errorf("Failed to create indexes on collection %v: %v", coll.Name(), err)
 	}
 }

@@ -3,12 +3,12 @@ package admin
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 )
 
 var AdminChannelID string
@@ -19,7 +19,7 @@ func init() {
 	var ok bool
 	AdminChannelID, ok = os.LookupEnv("DISCORD_BOT_ADMIN_CHANNEL_ID")
 	if !ok {
-		log.Fatal("Admin Channel ID not found")
+		logrus.Fatal("Admin Channel ID not found")
 	}
 }
 
@@ -31,7 +31,7 @@ func CommandHandlers() map[string]func(s *discordgo.Session, i *discordgo.Intera
 
 func dumpCommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if i.ChannelID != AdminChannelID {
-		WrongChannelResponse(s, i.Interaction, AdminChannelID)
+		WrongChannelResponse(s, i.Interaction)
 		return
 	}
 
@@ -41,11 +41,22 @@ func dumpCommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 	err := s.InteractionRespond(i.Interaction, &response)
 	if err != nil {
-		log.Panicf("Error on responding \"%v\": %v", i.ApplicationCommandData().Name, err)
+		logrus.Errorf("Error on responding \"%v\": %v", i.ApplicationCommandData().Name, err)
+		return
 	}
 
-	modelList := FetchAllItems()
-	bufBytes := GenerateCSV(modelList)
+	modelList, err := FetchAllItems()
+	if err != nil {
+		logrus.Errorf("Error on fetching approved items from DB: %v", err)
+		return
+	}
+
+	bufBytes, err := GenerateCSV(modelList)
+	if err != nil {
+		logrus.Errorf("Error on generating dump CSV: %v", err)
+		return
+	}
+
 	fileName := fmt.Sprintf("group-buy-dump-%s.csv", time.Now().Format("2017-09-07"))
 	fileInfo := discordgo.File{
 		Name:        fileName,
@@ -58,5 +69,9 @@ func dumpCommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			&fileInfo,
 		},
 	}
-	s.FollowupMessageCreate(i.Interaction, true, &options)
+
+	_, err = s.FollowupMessageCreate(i.Interaction, true, &options)
+	if err != nil {
+		logrus.Errorf("Error on sending dump message: %v", err)
+	}
 }
