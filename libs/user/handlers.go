@@ -157,4 +157,6 @@ func addModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err != nil {
 		logrus.Errorf("Error on deleting \"%v modal confirmation\" response: %v", data.CustomID, err)
 	}
+
+	CheckReadyToBuy()
 }
