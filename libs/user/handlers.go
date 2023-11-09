@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/DaviPtrs/group-buy-bot/libs/approval"
 	"github.com/DaviPtrs/group-buy-bot/libs/item"
@@ -162,4 +163,6 @@ func addModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Panicf("Unable to respond to modal %v: %v", data.CustomID, err)
 	}
 
+	time.Sleep(time.Second * 10)
+	s.InteractionResponseDelete(i.Interaction)
 }
