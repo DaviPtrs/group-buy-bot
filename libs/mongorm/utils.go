@@ -12,7 +12,7 @@ func ConnectedClient() *mongo.Client {
 	if err != nil {
 		logrus.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
-	logrus.Infof("Successfully connected to MongoDB")
+	logrus.Debugf("Successfully connected to MongoDB")
 	return client
 }
 
