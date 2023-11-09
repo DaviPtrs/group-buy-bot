@@ -7,6 +7,7 @@ import (
 
 	"github.com/DaviPtrs/group-buy-bot/libs/admin"
 	"github.com/DaviPtrs/group-buy-bot/libs/approval"
+	"github.com/DaviPtrs/group-buy-bot/libs/bot/session"
 	"github.com/DaviPtrs/group-buy-bot/libs/user"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -18,35 +19,14 @@ var removeCommands bool
 
 func init() {
 	godotenv.Load()
-}
 
-func init() {
-	token, ok := os.LookupEnv("DISCORD_BOT_TOKEN")
-	if !ok {
-		log.Fatal("Bot Token not found")
-	}
-	guildID, ok = os.LookupEnv("DISCORD_BOT_GUILD_ID")
-	if !ok {
-		log.Fatal("Guild ID not found")
-	}
 	env, ok := os.LookupEnv("DISCORD_BOT_ENVIRONMENT")
 	if ok && env == "development" {
 		removeCommands = true
 	}
 
-	var err error
-	discord, err = discordgo.New("Bot " + token)
-	if err != nil {
-		log.Fatalf("Failed to create session: %v", err)
-	}
-}
-
-func GetDiscordSession() *discordgo.Session {
-	return discord
-}
-
-func GetGuildID() string {
-	return guildID
+	discord = session.GetDiscordSession()
+	guildID = session.GetGuildID()
 }
 
 func interactionCreateHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
