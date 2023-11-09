@@ -1,4 +1,4 @@
-package user
+package check
 
 import (
 	"fmt"
@@ -9,10 +9,44 @@ import (
 	"github.com/DaviPtrs/group-buy-bot/libs/mongorm"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var readyMessageSent = false
-var lastBuyerCount = 0
+var StateColletionName = "states"
+
+func init() {
+	client := mongorm.ConnectedClient()
+	defer mongorm.DisconnectClient(client)
+	coll := client.Database(mongorm.DatabaseName).Collection(StateColletionName)
+
+	trueVar := true
+	indexes := []mongo.IndexModel{
+		{
+			Keys:    bson.D{{Key: "guild_id", Value: 1}},
+			Options: &options.IndexOptions{Unique: &trueVar},
+		},
+	}
+	mongorm.AddIndexes(coll, indexes)
+
+	var state *GBState = new(GBState)
+	err := state.Read(coll, stateFilter, state)
+
+	if err == mongo.ErrNoDocuments {
+		logrus.Info("No state found on DB. Populating...")
+		state.PopulateState()
+		err := state.Create(coll, state)
+		if err != nil {
+			logrus.Errorf("Unable to create state: %v", err)
+		} else {
+			logrus.Info("State initialized")
+		}
+	}
+
+	if state.GuildID != session.GetGuildID() {
+		logrus.Fatalf("Stored state is invalid! %v", *state)
+	}
+}
 
 func GetDistinctBuyers() []string {
 	client := mongorm.ConnectedClient()
@@ -45,18 +79,23 @@ func CheckReadyToBuy() {
 		logrus.Errorf("buyers list on checkReady is null")
 		return
 	}
+
+	state := GetState()
 	count := len(buyers)
+
 	if count < 2 {
-		readyMessageSent = false
+		state.ReadyMessageSent = false
+		state.Save()
 		return
 	}
 
-	if count != lastBuyerCount {
-		readyMessageSent = false
-		lastBuyerCount = count
+	if count != state.LastBuyerCount {
+		state.ReadyMessageSent = false
+		state.LastBuyerCount = count
+		state.Save()
 	}
 
-	if readyMessageSent {
+	if state.ReadyMessageSent {
 		return
 	}
 
@@ -84,5 +123,6 @@ func CheckReadyToBuy() {
 			return
 		}
 	}
-	readyMessageSent = true
+	state.ReadyMessageSent = true
+	state.Save()
 }

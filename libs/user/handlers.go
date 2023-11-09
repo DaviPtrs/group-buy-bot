@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/DaviPtrs/group-buy-bot/libs/approval"
+	"github.com/DaviPtrs/group-buy-bot/libs/check"
 	"github.com/DaviPtrs/group-buy-bot/libs/item"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -158,5 +159,5 @@ func addModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		logrus.Errorf("Error on deleting \"%v modal confirmation\" response: %v", data.CustomID, err)
 	}
 
-	CheckReadyToBuy()
+	check.CheckReadyToBuy()
 }
