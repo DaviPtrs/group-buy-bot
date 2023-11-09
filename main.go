@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/DaviPtrs/group-buy-bot/libs/admin"
 	"github.com/DaviPtrs/group-buy-bot/libs/approval"
 	"github.com/DaviPtrs/group-buy-bot/libs/user"
 	"github.com/bwmarrin/discordgo"
@@ -46,6 +47,9 @@ func interactionCreateHandler(s *discordgo.Session, i *discordgo.InteractionCrea
 		if h, ok := user.CommandHandlers()[i.ApplicationCommandData().Name]; ok {
 			h(s, i)
 		}
+		if h, ok := admin.CommandHandlers()[i.ApplicationCommandData().Name]; ok {
+			h(s, i)
+		}
 	case discordgo.InteractionModalSubmit:
 		for _, h := range user.ModalHandlers() {
 			h(s, i)
@@ -56,6 +60,22 @@ func interactionCreateHandler(s *discordgo.Session, i *discordgo.InteractionCrea
 	case discordgo.InteractionMessageComponent:
 		for _, h := range approval.ButtonHandlers() {
 			h(s, i)
+		}
+	}
+}
+
+func registerCommands(s *discordgo.Session) {
+	for _, v := range user.Commands {
+		_, err := discord.ApplicationCommandCreate(discord.State.User.ID, guildID, v)
+		if err != nil {
+			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+		}
+	}
+
+	for _, v := range admin.Commands {
+		_, err := discord.ApplicationCommandCreate(discord.State.User.ID, guildID, v)
+		if err != nil {
+			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
 		}
 	}
 }
@@ -71,12 +91,7 @@ func main() {
 		log.Fatalf("Cannot open the session: %v", err)
 	}
 
-	for _, v := range user.Commands {
-		_, err := discord.ApplicationCommandCreate(discord.State.User.ID, guildID, v)
-		if err != nil {
-			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
-		}
-	}
+	registerCommands(discord)
 
 	defer discord.Close()
 
