@@ -39,7 +39,7 @@ func approveModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	submit_message := "Item approved!"
+	submit_message := fmt.Sprintf("Item approved by <@%s>!", i.Interaction.Member.User.ID)
 	embed := discordgo.MessageEmbed{
 		Fields: *model.Item.ParseToEmbedFields(),
 	}
@@ -112,7 +112,7 @@ func rejectModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	reason := data.Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
-	submit_message := fmt.Sprintf("Item rejected! Reason: %v", reason)
+	submit_message := fmt.Sprintf("Item rejected by <@%s>! Reason: %v", i.Interaction.Member.User.ID, reason)
 	embed := discordgo.MessageEmbed{
 		Fields: *model.Item.ParseToEmbedFields(),
 	}
