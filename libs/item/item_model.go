@@ -7,6 +7,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var ToApprovalCollectionName = "items_to_approval"
+var ApprovedCollectionName = "items_approved"
+
 var trueVar = true // why???? WHY DO I HAVE TO DO THIS?
 
 var Indexes = []mongo.IndexModel{
@@ -22,4 +25,17 @@ var Indexes = []mongo.IndexModel{
 type ItemModel struct {
 	mongorm.Model
 	Item
+}
+
+func SeedDB() {
+	client := mongorm.ConnectedClient()
+
+	var coll *mongo.Collection
+	coll = client.Database(mongorm.DatabaseName).Collection(ToApprovalCollectionName)
+	mongorm.AddIndexes(coll, Indexes)
+
+	coll = client.Database(mongorm.DatabaseName).Collection(ApprovedCollectionName)
+	mongorm.AddIndexes(coll, Indexes)
+
+	defer mongorm.DisconnectClient(client)
 }

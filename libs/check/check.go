@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DaviPtrs/group-buy-bot/libs/approval"
 	"github.com/DaviPtrs/group-buy-bot/libs/bot/session"
+	"github.com/DaviPtrs/group-buy-bot/libs/item"
 	"github.com/DaviPtrs/group-buy-bot/libs/mongorm"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -52,7 +52,7 @@ func GetDistinctBuyers() []string {
 	client := mongorm.ConnectedClient()
 	defer mongorm.DisconnectClient(client)
 
-	coll := client.Database(mongorm.DatabaseName).Collection(approval.ApprovedCollectionName)
+	coll := client.Database(mongorm.DatabaseName).Collection(item.ApprovedCollectionName)
 
 	results, err := coll.Distinct(mongorm.DefaultContext, "item.user_id", bson.D{})
 	if err != nil {

@@ -9,12 +9,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var ApprovalChannelID string
-var ToApprovalCollectionName = "items_to_approval"
-var ApprovedCollectionName = "items_approved"
 
 func init() {
 	godotenv.Load()
@@ -24,20 +21,7 @@ func init() {
 	if !ok {
 		logrus.Fatal("Approval Channel ID not found")
 	}
-	seedDB()
-}
-
-func seedDB() {
-	client := mongorm.ConnectedClient()
-
-	var coll *mongo.Collection
-	coll = client.Database(mongorm.DatabaseName).Collection(ToApprovalCollectionName)
-	mongorm.AddIndexes(coll, item.Indexes)
-
-	coll = client.Database(mongorm.DatabaseName).Collection(ApprovedCollectionName)
-	mongorm.AddIndexes(coll, item.Indexes)
-
-	defer mongorm.DisconnectClient(client)
+	item.SeedDB()
 }
 
 func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.ModalSubmitInteractionData) error {
@@ -78,7 +62,7 @@ func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.Mod
 	client := mongorm.ConnectedClient()
 	defer mongorm.DisconnectClient(client)
 
-	coll := client.Database(mongorm.DatabaseName).Collection(ToApprovalCollectionName)
+	coll := client.Database(mongorm.DatabaseName).Collection(item.ToApprovalCollectionName)
 
 	err = model.Create(coll, model)
 	if err != nil {

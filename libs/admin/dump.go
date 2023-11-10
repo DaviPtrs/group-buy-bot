@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 
-	"github.com/DaviPtrs/group-buy-bot/libs/approval"
 	"github.com/DaviPtrs/group-buy-bot/libs/item"
 	"github.com/DaviPtrs/group-buy-bot/libs/mongorm"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,7 +18,7 @@ func FetchAllItems() (*[]*item.ItemModel, error) {
 	filter := bson.D{}
 	opts := options.Find().SetSort(bson.D{{Key: "item.user_id", Value: 1}})
 
-	coll := client.Database(mongorm.DatabaseName).Collection(approval.ApprovedCollectionName)
+	coll := client.Database(mongorm.DatabaseName).Collection(item.ApprovedCollectionName)
 	cursor, err := coll.Find(mongorm.DefaultContext, filter, opts)
 	if err != nil {
 		return nil, err

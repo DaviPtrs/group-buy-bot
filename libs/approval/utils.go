@@ -40,7 +40,7 @@ func popFromToApproval(id string) (*item.ItemModel, error) {
 	client := mongorm.ConnectedClient()
 	defer mongorm.DisconnectClient(client)
 
-	coll := client.Database(mongorm.DatabaseName).Collection(ToApprovalCollectionName)
+	coll := client.Database(mongorm.DatabaseName).Collection(item.ToApprovalCollectionName)
 
 	var model *item.ItemModel = new(item.ItemModel)
 	err := model.Read(coll, bson.M{"item.custom_id": id}, model)
@@ -59,7 +59,7 @@ func pushToApproved(model *item.ItemModel) error {
 	client := mongorm.ConnectedClient()
 	defer mongorm.DisconnectClient(client)
 
-	coll := client.Database(mongorm.DatabaseName).Collection(ApprovedCollectionName)
+	coll := client.Database(mongorm.DatabaseName).Collection(item.ApprovedCollectionName)
 	err := model.Create(coll, model)
 	return err
 }
