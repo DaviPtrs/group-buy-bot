@@ -4,9 +4,24 @@ import (
 	"time"
 
 	"github.com/DaviPtrs/group-buy-bot/libs/bot/session"
+	"github.com/DaviPtrs/group-buy-bot/libs/item"
+	"github.com/DaviPtrs/group-buy-bot/libs/mongorm"
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 )
+
+func dropApprovedItems() error {
+	client := mongorm.ConnectedClient()
+	defer mongorm.DisconnectClient(client)
+
+	coll := client.Database(mongorm.DatabaseName).Collection(item.ApprovedCollectionName)
+	if err := coll.Drop(mongorm.DefaultContext); err != nil {
+		return err
+	}
+	item.SeedDB()
+
+	return nil
+}
 
 func WrongChannelResponse(s *discordgo.Session, i *discordgo.Interaction) {
 	message := "Parou a palhaçada ai, você não tem permissão pra usar esse comando!"

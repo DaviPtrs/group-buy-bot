@@ -25,7 +25,8 @@ func init() {
 
 func CommandHandlers() map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	return map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"dump": dumpCommandHandler,
+		"dump":   dumpCommandHandler,
+		"finish": finishCommandHandler,
 	}
 }
 
@@ -57,7 +58,7 @@ func dumpCommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	fileName := fmt.Sprintf("group-buy-dump-%s.csv", time.Now().Format("2017-09-07"))
+	fileName := fmt.Sprintf("group-buy-dump-%s.csv", time.Now().Format("2017-09-07-1504"))
 	fileInfo := discordgo.File{
 		Name:        fileName,
 		ContentType: "multipart/form-data",
@@ -73,5 +74,26 @@ func dumpCommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	_, err = s.FollowupMessageCreate(i.Interaction, true, &options)
 	if err != nil {
 		logrus.Errorf("Error on sending dump message: %v", err)
+	}
+}
+
+func finishCommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.ChannelID != AdminChannelID {
+		WrongChannelResponse(s, i.Interaction)
+		return
+	}
+
+	dumpCommandHandler(s, i)
+
+	if err := dropApprovedItems(); err != nil {
+		logrus.Errorf("Error on finishing group buy batch: %v", err)
+	}
+
+	options := discordgo.WebhookParams{
+		Content: "Approved items marked as shipped and removed!",
+	}
+	_, err := s.FollowupMessageCreate(i.Interaction, true, &options)
+	if err != nil {
+		logrus.Errorf("Error on sending finish confirmation message: %v", err)
 	}
 }

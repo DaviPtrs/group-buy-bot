@@ -8,6 +8,10 @@ var (
 			Name:        "dump",
 			Description: "Dump Approved GB items to CSV",
 		},
+		{
+			Name:        "finish",
+			Description: "Mark all approved items as shipped. This action is destructive.",
+		},
 		// {
 		// 	Name:        "del",
 		// 	Description: "Dump Approved GB items to CSV",
