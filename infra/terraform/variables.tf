@@ -15,7 +15,7 @@ variable "subnet_id" {
 
 variable "ad_number" {
   type    = string
-  default = "3"
+  default = "1"
 }
 variable "ssh_pub_key" {
 }
@@ -29,5 +29,5 @@ variable "instance_image_ocid" {
 }
 variable "preserve_boot_volume" {
   type    = bool
-  default = true
+  default = false
 }

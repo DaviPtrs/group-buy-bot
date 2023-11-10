@@ -1,12 +1,21 @@
+# terraform {
+#   backend "remote" {
+#     organization = "DaviPtrs"
+#     workspaces {
+#       name = "group-buy-bot"
+#     }
+#   }
+# }
+
+
 terraform {
-  backend "remote" {
+  cloud {
     organization = "DaviPtrs"
     workspaces {
       name = "group-buy-bot"
     }
   }
 }
-
 provider "oci" {
   tenancy_ocid     = var.tenancy_ocid
   user_ocid        = var.user_ocid
