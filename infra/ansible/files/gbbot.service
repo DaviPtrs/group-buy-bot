@@ -1,0 +1,11 @@
+[Unit]
+Description=GroupBuyBot service
+
+[Service]
+User=ubuntu
+Group=ubuntu
+ExecStart=/home/ubuntu/bot/group-buy-bot
+EnvironmentFile=/home/ubuntu/bot/.env
+
+[Install]
+WantedBy=multi-user.target

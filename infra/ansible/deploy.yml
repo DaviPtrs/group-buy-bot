@@ -4,17 +4,48 @@
   become: true
   vars:
     ansible_host_key_checking: false
+    deploy_path: /home/ubuntu/bot
   tasks:
+    - name: Make sure the deploy dir exists
+      ansible.builtin.file:
+        path: "{{ deploy_path }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0775'
+
+    # - name: Check if app binary exists
+    #   ansible.builtin.stat:
+    #     path: "{{ deploy_path }}/group-buy-bot"
+    #   register: app_check
+
+    # - debug:
+    #     var: app_check.stat.exists
+
+    - name: Check if service file exists
+      ansible.builtin.stat:
+        path: /etc/systemd/system/gbbot.service
+      register: systemd_deploy
+
     - name: Copy systemd service file to server
       ansible.builtin.copy:
         src: gbbot.service
         dest: /etc/systemd/system/
         owner: root
         group: root
+      register: systemd
 
-    - name: Start bot service
+    - name: Start bot service (first time)
       ansible.builtin.systemd:
         name: gbbot
         daemon_reload: true
         enabled: true
         state: started
+      when: not systemd_deploy.stat.exists
+
+    - name: Reload and restart bot service
+      ansible.builtin.systemd:
+        name: gbbot
+        daemon_reload: true
+        state: restarted
+      when: systemd_deploy.stat.exists and systemd.changed
