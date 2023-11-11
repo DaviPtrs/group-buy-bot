@@ -1,6 +1,7 @@
 name: "Terraform Apply"
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - './infra/terraform/*'
@@ -36,6 +37,12 @@ jobs:
         with:
           workspace: ${{ env.TF_WORKSPACE }}
           configuration_version: ${{ steps.apply-upload.outputs.configuration_version_id }}
+      
+      - name: Get Plan Output
+        uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.0.0
+        id: plan-output
+        with:
+          plan: ${{ fromJSON(steps.apply-run.outputs.payload).data.relationships.plan.data.id }}
 
       - name: Apply
         uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
