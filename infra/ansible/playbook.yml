@@ -4,11 +4,19 @@
   become: true
   vars:
     ansible_host_key_checking: false
-    mongodb_version: 7.0
   roles:
     - community.mongodb.mongodb_linux
-    - community.mongodb.mongodb_repository
+    - role: community.mongodb.mongodb_repository
+      vars:
+        mongodb_version: 7.0
     - community.mongodb.mongodb_install
+    - role: community.mongodb.mongodb_mongod
+      vars:
+        mongod_config_template: ./fixed-mongod.conf.j2
+        skip_restart: false
+        authorization: "disabled"
+        replicaset: false
+        # db_path: /var/mongo
   pre_tasks:
     - name: Ensure APT cache and all packages are up-to-date
       ansible.builtin.apt:
