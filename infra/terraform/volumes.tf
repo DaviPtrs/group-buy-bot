@@ -3,7 +3,7 @@ resource "oci_core_volume" "instance-datadisk" {
   compartment_id      = var.compartment_ocid
   display_name        = "group-buy-bot_datadisk"
   size_in_gbs         = var.datadisk_size_in_gbs
-  vpus_per_gb         = "20"
+  vpus_per_gb         = "10"
 }
 
 resource "oci_core_volume_attachment" "instance-datadisk" {
