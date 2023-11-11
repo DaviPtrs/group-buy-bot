@@ -14,13 +14,28 @@
         group: ubuntu
         mode: '0775'
 
-    # - name: Check if app binary exists
-    #   ansible.builtin.stat:
-    #     path: "{{ deploy_path }}/group-buy-bot"
-    #   register: app_check
+    - name: Check if app binary exists
+      ansible.builtin.stat:
+        path: "{{ deploy_path }}/group-buy-bot"
+      register: app_check
 
-    # - debug:
-    #     var: app_check.stat.exists
+    - name: Deploy application binary
+      ansible.builtin.copy:
+        src: ../../bin/group-buy-bot
+        dest: "{{ deploy_path }}/"
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+      register: app_deploy
+
+    - name: Deploy application env file
+      ansible.builtin.copy:
+        src: ../../.env
+        dest: "{{ deploy_path }}/"
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+      register: env_deploy
 
     - name: Check if service file exists
       ansible.builtin.stat:
@@ -48,4 +63,5 @@
         name: gbbot
         daemon_reload: true
         state: restarted
-      when: systemd_deploy.stat.exists and systemd.changed
+      when: (systemd_deploy.stat.exists and systemd.changed) or
+            app_deploy.changed or env_deploy.changed
