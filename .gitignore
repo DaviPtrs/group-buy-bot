@@ -23,5 +23,6 @@ go.work
 bin/*
 !bin/.gitkeep
 
-.env
+.env*
+!.env.example
 example/
