@@ -26,3 +26,4 @@ bin/*
 .env*
 !.env.example
 example/
+.vscode/settings.json
