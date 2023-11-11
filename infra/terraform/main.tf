@@ -2,7 +2,8 @@ terraform {
   cloud {
     organization = "DaviPtrs"
     workspaces {
-      name = "group-buy-bot"
+      project = "group-buy-bot"
+      tags = ["infra"]
     }
   }
 }
