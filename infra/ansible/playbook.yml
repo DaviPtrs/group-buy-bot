@@ -1,0 +1,17 @@
+- name: Configure the deploy server
+  hosts: all
+  remote_user: ubuntu
+  become: true
+  vars:
+    ansible_host_key_checking: false
+    mongodb_version: 7.0
+  roles:
+    - community.mongodb.mongodb_linux
+    - community.mongodb.mongodb_repository
+    - community.mongodb.mongodb_install
+  pre_tasks:
+    - name: Ensure APT cache and all packages are up-to-date
+      ansible.builtin.apt:
+        upgrade: true
+        update_cache: true
+        cache_valid_time: 86400 # One day
