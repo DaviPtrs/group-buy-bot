@@ -15,7 +15,7 @@ env:
 
 jobs:
   terraform:
-    if: github.action_ref == 'main'
+    if: github.ref_name == 'main'
     name: "Terraform Apply"
     runs-on: ubuntu-latest
     permissions:
