@@ -1,0 +1,20 @@
+- name: Deploy the application
+  hosts: all
+  remote_user: ubuntu
+  become: true
+  vars:
+    ansible_host_key_checking: false
+  tasks:
+    - name: Copy systemd service file to server
+      ansible.builtin.copy:
+        src: gbbot.service
+        dest: /etc/systemd/system/
+        owner: root
+        group: root
+
+    - name: Start bot service
+      ansible.builtin.systemd:
+        name: gbbot
+        daemon_reload: true
+        enabled: true
+        state: started

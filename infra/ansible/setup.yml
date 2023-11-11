@@ -55,6 +55,3 @@
         owner: mongodb
         group: mongodb
         mode: '0755'
-  tasks:
-    - debug:
-        msg: done
