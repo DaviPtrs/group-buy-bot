@@ -31,3 +31,10 @@ variable "preserve_boot_volume" {
   type    = bool
   default = false
 }
+
+variable "datadisk_device_path" {
+  default = "/dev/oracleoci/oraclevdc"
+}
+variable "datadisk_size_in_gbs" {
+  default = "100"
+}
