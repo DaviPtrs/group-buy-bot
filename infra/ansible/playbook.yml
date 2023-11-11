@@ -4,6 +4,7 @@
   become: true
   vars:
     ansible_host_key_checking: false
+    datadisk_device_path: "/dev/oracleoci/oraclevdc"
   roles:
     - community.mongodb.mongodb_linux
     - role: community.mongodb.mongodb_repository
@@ -26,14 +27,14 @@
 
     - name: Create a new ext4 primary partition
       community.general.parted:
-        device: /dev/oracleoci/oraclevdc # Take this from variable
+        device: "{{ datadisk_device_path }}"
         number: 1
         state: present
 
     - name: Format disk with xfs if needed
       community.general.filesystem:
         fstype: xfs
-        dev: "/dev/oracleoci/oraclevdc1" # Take this from variable
+        dev: "{{ datadisk_device_path }}1"
 
     - name: Make sure mount target exists
       ansible.builtin.file:
@@ -42,7 +43,7 @@
 
     - name: Mount disk and add fstab entry
       ansible.posix.mount:
-        src: /dev/oracleoci/oraclevdc1 # Take this from variable
+        src: "{{ datadisk_device_path }}1"
         path: /mnt/data
         state: mounted
         fstype: xfs
