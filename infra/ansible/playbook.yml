@@ -16,10 +16,44 @@
         skip_restart: false
         authorization: "disabled"
         replicaset: false
-        # db_path: /var/mongo
+        db_path: /mnt/data/mongodb
   pre_tasks:
     - name: Ensure APT cache and all packages are up-to-date
       ansible.builtin.apt:
         upgrade: true
         update_cache: true
         cache_valid_time: 86400 # One day
+
+    - name: Create a new ext4 primary partition
+      community.general.parted:
+        device: /dev/oracleoci/oraclevdc # Take this from variable
+        number: 1
+        state: present
+
+    - name: Format disk with xfs if needed
+      community.general.filesystem:
+        fstype: xfs
+        dev: "/dev/oracleoci/oraclevdc1" # Take this from variable
+
+    - name: Make sure mount target exists
+      ansible.builtin.file:
+        path: /mnt/data
+        state: directory
+
+    - name: Mount disk and add fstab entry
+      ansible.posix.mount:
+        src: /dev/oracleoci/oraclevdc1 # Take this from variable
+        path: /mnt/data
+        state: mounted
+        fstype: xfs
+
+    - name: Make sure the mongodb data dir exists
+      ansible.builtin.file:
+        path: /mnt/data/mongodb
+        state: directory
+        owner: mongodb
+        group: mongodb
+        mode: '0755'
+  tasks:
+    - debug:
+        msg: done
