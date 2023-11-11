@@ -52,6 +52,15 @@
       ansible.builtin.file:
         path: /mnt/data/mongodb
         state: directory
+        owner: nobody
+        group: nogroup
+        mode: '0777'
+
+  tasks:
+    - name: Fix mongodb data permissions
+      ansible.builtin.file:
+        path: /mnt/data/mongodb
+        state: directory
         owner: mongodb
         group: mongodb
         mode: '0755'

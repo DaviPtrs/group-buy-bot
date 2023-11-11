@@ -5,6 +5,7 @@
   vars:
     ansible_host_key_checking: false
     deploy_path: /home/ubuntu/bot
+    artifact_path: ../../bin/group-buy-bot
   tasks:
     - name: Make sure the deploy dir exists
       ansible.builtin.file:
@@ -21,7 +22,7 @@
 
     - name: Deploy application binary
       ansible.builtin.copy:
-        src: ../../bin/group-buy-bot
+        src: "{{ artifact_path }}"
         dest: "{{ deploy_path }}/"
         owner: ubuntu
         group: ubuntu
@@ -50,13 +51,12 @@
         group: root
       register: systemd
 
-    - name: Start bot service (first time)
+    - name: Start bot service
       ansible.builtin.systemd:
         name: gbbot
         daemon_reload: true
         enabled: true
         state: started
-      when: not systemd_deploy.stat.exists
 
     - name: Reload and restart bot service
       ansible.builtin.systemd:

@@ -1,0 +1,156 @@
+name: "Deploy"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+env:
+  TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
+  TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
+  TF_WORKSPACE: ${{ vars.TF_WORKSPACE }}
+  TF_CLOUD_PROJECT: ${{ vars.TF_CLOUD_PROJECT }}
+  TF_CONFIG_DIR: ${{ vars.TF_CONFIG_DIR }}
+
+jobs:
+  provision:
+    name: "Provision"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      instance-ip: ${{ steps.instance-ip.outputs.value }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload Configuration
+        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.1.1
+        id: apply-upload
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          directory: ${{ env.TF_CONFIG_DIR }}
+
+      - name: Create Apply Run
+        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.1.1
+        id: apply-run
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          configuration_version: ${{ steps.apply-upload.outputs.configuration_version_id }}
+      
+      - name: Get Plan Output
+        uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.1.1
+        id: plan-output
+        with:
+          plan: ${{ fromJSON(steps.apply-run.outputs.payload).data.relationships.plan.data.id }}
+
+      - name: Apply
+        uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.1.1
+        if: fromJSON(steps.apply-run.outputs.payload).data.attributes.actions.IsConfirmable
+        id: apply
+        with:
+          run: ${{ steps.apply-run.outputs.run_id }}
+          comment: "Apply Run from GitHub Actions CI ${{ github.sha }}"
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.3
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
+      
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ${{ env.TF_CONFIG_DIR }}
+
+      - name: Get instance IP
+        id: instance-ip
+        run: |
+          echo "value=$(terraform output instance_public_ip)" >> "$GITHUB_OUTPUT"
+        working-directory: ${{ env.TF_CONFIG_DIR }}
+
+  configure:
+    name: "Configure"
+    runs-on: ubuntu-latest
+    needs: provision
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+    
+      - name: Run playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: setup.yml
+          directory: ${{ vars.ANSIBLE_CONFIG_DIR }}
+          requirements: requirements.yml
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          inventory: |
+            [all]
+            ${{ needs.provision.outputs.instance-ip }}
+
+  build:
+    name: "Build"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+    
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: './go.mod'
+
+      - name: Build
+        run: GOOS=linux GOARCH=arm64 go build -o bin/group-buy-bot -v 
+
+      # - name: Test
+      #   run: go test -v ./...
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            bin/*
+            !bin/.gitkeep
+    
+  deploy:
+    name: "Deploy"
+    runs-on: ubuntu-latest
+    needs: 
+      - provision
+      - configure
+      - build
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+    
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        id: build-artifacts
+        with:
+          name: build-artifacts
+          path: bin/
+      
+      - name: Add .env file
+        run: echo "${{ secrets.APP_ENV_FILE }}" | base64 -d > .env
+
+      - name: Run playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: deploy.yml
+          directory: ${{ vars.ANSIBLE_CONFIG_DIR }}
+          requirements: requirements.yml
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          inventory: |
+            [all]
+            ${{ needs.provision.outputs.instance-ip }}
+          options: |
+            --extra-vars artifact_path="${{ steps.build-artifacts.outputs.download-path }}/group-buy-bot"
