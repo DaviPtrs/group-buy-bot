@@ -85,7 +85,6 @@ func Run() {
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
-	logrus.Println("Press Ctrl+C to exit")
 	<-stop
 
 	if removeCommands {
