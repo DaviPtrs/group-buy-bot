@@ -29,7 +29,6 @@ func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.Mod
 	if err != nil {
 		return err
 	}
-	// logrus.Print(i)
 
 	embed := discordgo.MessageEmbed{
 		Fields: *i.ParseToEmbedFields(),
@@ -57,6 +56,12 @@ func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.Mod
 			},
 		},
 	}
+	_, err = s.ChannelMessageSendComplex(ApprovalChannelID, &message)
+
+	if err != nil {
+		return fmt.Errorf("error on sending item to approval channel: %v", err)
+	}
+
 	model := i.GetModel()
 
 	client := mongorm.ConnectedClient()
@@ -67,12 +72,6 @@ func SendItemToApproval(s *discordgo.Session, userID string, data *discordgo.Mod
 	err = model.Create(coll, model)
 	if err != nil {
 		return fmt.Errorf("failed to create to_approval item: %v", err)
-	}
-
-	_, err = s.ChannelMessageSendComplex(ApprovalChannelID, &message)
-
-	if err != nil {
-		return fmt.Errorf("error on sending item to approval channel: %v", err)
 	}
 
 	return nil
