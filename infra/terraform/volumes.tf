@@ -16,3 +16,9 @@ resource "oci_core_volume_attachment" "instance-datadisk" {
   instance_id     = oci_core_instance.instance.id
   volume_id       = oci_core_volume.instance-datadisk.id
 }
+
+resource "oci_core_volume_backup_policy_assignment" "datadisk_backup" {
+
+  asset_id  = oci_core_volume.instance-datadisk.id
+  policy_id = local.backup_policy_map["gold"]
+}

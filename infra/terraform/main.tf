@@ -3,7 +3,7 @@ terraform {
     organization = "DaviPtrs"
     workspaces {
       project = "group-buy-bot"
-      name = "main"
+      name    = "main"
     }
   }
 }
