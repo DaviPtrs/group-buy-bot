@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/DaviPtrs/group-buy-bot/libs/check"
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 )
@@ -58,6 +59,8 @@ func approveModalHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err := SendItemFeedback(s, &model.Item, nil); err != nil {
 		logrus.Error(err)
 	}
+	check.CheckReadyToBuy()
+
 }
 
 func approveItemHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
